@@ -89,26 +89,40 @@ const addBlog = async (req, res) => {
         : req.files.primaryImage;
     }
 
-    // ✅ Generate slug from blog title
-    if (formData.title && typeof formData.title === "string") {
-      const trimmedTitle = formData.title.trim();
-      formData.title = trimmedTitle;
-
-      let baseSlug = trimmedTitle
+    // ✅ Handle slug (use provided slug, or fallback to generating from title)
+    let slug = "";
+    if (formData.slug && typeof formData.slug === "string" && formData.slug.trim()) {
+      slug = formData.slug
         .toLowerCase()
         .replace(/[^\w\s-]/g, "")
         .replace(/\s+/g, "-")
         .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "")
         .trim();
+    } else if (formData.title && typeof formData.title === "string" && formData.title.trim()) {
+      slug = formData.title
+        .trim()
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .trim();
+    }
 
-      let slug = formData.slug;
-      let slugExists = await Blog.findOne({ slug });
+    if (!slug) {
+      throw Error("Slug or title is required to generate a slug.");
+    }
 
-      if (slugExists) {
-        throw Error("The Slug is already used. Please try another one.");
-      }
+    const slugExists = await Blog.findOne({ slug });
+    if (slugExists) {
+      throw Error("The Slug is already used. Please try another one.");
+    }
 
-      formData.slug = slug;
+    formData.slug = slug;
+
+    if (formData.title && typeof formData.title === "string") {
+      formData.title = formData.title.trim();
     }
 
     // ✅ Parse content and other fields safely
@@ -197,9 +211,17 @@ const updateBlog = async (req, res) => {
     }
 
     // Check if slug is already used by another blog
-    if (formData.slug) {
+    if (formData.slug && typeof formData.slug === "string" && formData.slug.trim()) {
+      formData.slug = formData.slug
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .trim();
+
       const slugExists = await Blog.findOne({
-        slug: formData.slug.toLowerCase().trim(),
+        slug: formData.slug,
         _id: { $ne: id }
       });
       if (slugExists) {
@@ -265,6 +287,7 @@ const updateBlog = async (req, res) => {
         .replace(/[^\w\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
         .trim();
     }
 

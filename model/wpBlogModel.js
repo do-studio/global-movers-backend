@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 const { extractAndUploadBase64Images } = require("../utils/imageOptimizer");
 
 
-const blogSchema = new Schema(
+const wpbloglogSchema = new Schema(
   {
     title: {
       type: String,
@@ -55,7 +55,7 @@ const blogSchema = new Schema(
 );
 
 // Auto-optimize images before saving
-blogSchema.pre('save', async function (next) {
+wpbloglogSchema.pre('save', async function (next) {
   if (this.isModified('content') && this.content && this.content.includes('data:image')) {
     console.log('🔄 Optimizing images in blog content...');
     this.content = await extractAndUploadBase64Images(this.content);
@@ -64,7 +64,7 @@ blogSchema.pre('save', async function (next) {
 });
 
 // Pre-save middleware to generate slug from title if not provided
-blogSchema.pre('save', function (next) {
+wpbloglogSchema.pre('save', function (next) {
   if (!this.slug) {
     if (this.title) {
       this.slug = this.title
@@ -88,10 +88,10 @@ blogSchema.pre('save', function (next) {
 });
 
 // Add indexes for better performance
-blogSchema.index({ slug: 1 });
-blogSchema.index({ isActive: 1, createdAt: -1 });
+wpbloglogSchema.index({ slug: 1 });
+wpbloglogSchema.index({ isActive: 1, createdAt: -1 });
 
 
-const Blog = mongoose.model("Blog", blogSchema);
+const WpBlog = mongoose.model("WpBlog", wpbloglogSchema);
 
-module.exports = Blog;
+module.exports = WpBlog;
